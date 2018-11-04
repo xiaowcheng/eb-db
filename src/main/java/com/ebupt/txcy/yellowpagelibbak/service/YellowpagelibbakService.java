@@ -3,6 +3,7 @@ package com.ebupt.txcy.yellowpagelibbak.service;
 import java.util.List;
 
 
+import com.ebupt.txcy.serviceapi.dto.PhoneListResponse;
 import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
 
 import com.ebupt.txcy.serviceapi.vo.Pagination;
@@ -16,17 +17,16 @@ public interface YellowpagelibbakService {
 
 	void delNumber(String phoneNumber,Integer sourceId);
 	void delNumber(String phoneNumber);
-	HSSFWorkbook exportNumbers(String phoneNumber, String timeArea);
+
 
 	Yellowpagelibbak searchNumber(String phoneCondition);
 
-	void addNumber(Yellowpagelibbak yellowpagelibbak);
 
-	void updateNumber(Yellowpagelibbak yellowpagelibbak);
+	PhoneListResponse updateNumber(Yellowpagelibbak yellowpagelibbak);
 
-    void addNumbers(List<Yellowpagelibbak> yellowpagelibbaks);
+	List<PhoneListResponse>  addNumbers(List<Yellowpagelibbak> yellowpagelibbaks);
 
-	void updateNumber(List<Yellowpagelibbak> yellowpagelibbaks);
+	List<PhoneListResponse>  updateNumber(List<Yellowpagelibbak> yellowpagelibbaks);
 
-	void delNumber(List<Yellowpagelibbak> yellowpagelibbaks);
+	List<PhoneListResponse>  delNumber(List<Yellowpagelibbak> yellowpagelibbaks);
 }

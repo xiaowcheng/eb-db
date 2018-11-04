@@ -5,12 +5,12 @@
     <parent>
         <groupId>com.ebupt.txcy</groupId>
         <artifactId>txcy-springcloud</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>com.ebupt.txcy</groupId>
     <artifactId>microservice-yellowpagelibbak-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>microservice-yellowpagelibbak-server</name>
     <description>黄页库备份服务提供</description>
 
@@ -18,6 +18,8 @@
         <java.version>1.8</java.version>
         <druid-spring-boot-starter.version>1.1.17</druid-spring-boot-starter.version>
         <ojdbc.version>14</ojdbc.version>
+        <docker.repostory>hub.ebupt.com</docker.repostory>
+        <docker.registry.name>txcyapi</docker.registry.name>
 
     </properties>
 
@@ -25,7 +27,7 @@
         <dependency>
             <groupId>com.ebupt.txcy</groupId>
             <artifactId>service-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -80,6 +82,46 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.12</version>
+                <!--插件绑定到phase-->
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <imageName>${docker.repostory}/${docker.registry.name}/${project.artifactId}</imageName>
+                    <imageTags>
+                        <imageTag>${project.version}</imageTag>
+                        <imageTag>latest</imageTag>
+                    </imageTags>
+                    <!-- 指定Dockerfile所在的路径 -->
+                    <dockerDirectory>${project.basedir}</dockerDirectory>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                    <serverId>harbor</serverId>
+                    <registryUrl>${docker.repostory}</registryUrl>
+                    <pushImage>true</pushImage>
+                </configuration>
             </plugin>
         </plugins>
     </build>
