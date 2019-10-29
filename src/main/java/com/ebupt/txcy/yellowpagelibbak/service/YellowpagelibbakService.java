@@ -5,12 +5,13 @@ import java.util.List;
 
 import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
 
+import com.ebupt.txcy.serviceapi.vo.Pagination;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 
 public interface YellowpagelibbakService {
 
-	List<Yellowpagelibbak> searchNumberList(String phoneCondition, Integer startStr);
+	Pagination<Yellowpagelibbak> searchNumberList(String phoneCondition, Integer startStr, Integer page);
 
 
 	void delNumber(String phoneNumber,Integer sourceId);
@@ -22,4 +23,10 @@ public interface YellowpagelibbakService {
 	void addNumber(Yellowpagelibbak yellowpagelibbak);
 
 	void updateNumber(Yellowpagelibbak yellowpagelibbak);
+
+    void addNumbers(List<Yellowpagelibbak> yellowpagelibbaks);
+
+	void updateNumber(List<Yellowpagelibbak> yellowpagelibbaks);
+
+	void delNumber(List<Yellowpagelibbak> yellowpagelibbaks);
 }

@@ -1,15 +1,17 @@
 package com.ebupt.txcy.yellowpagelibbak.service.impl;
 
+import java.util.Date;
 import java.util.List;
-
 import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
 import com.ebupt.txcy.serviceapi.Entity.YellowpagelibbakId;
+import com.ebupt.txcy.serviceapi.vo.Pagination;
 import com.ebupt.txcy.yellowpagelibbak.config.MyConfig;
 
 import com.ebupt.txcy.yellowpagelibbak.exception.ServiceException;
 import com.ebupt.txcy.yellowpagelibbak.repository.YellowpagelibbakRepository;
 import com.ebupt.txcy.yellowpagelibbak.service.YellowpagelibbakService;
 
+import com.ebupt.txcy.yellowpagelibbak.utils.CommonUtils;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -21,8 +23,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 
 @Service
 public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
@@ -31,19 +33,23 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 	@Autowired
 	private MyConfig myConfig;
 	@Override
-	public List<Yellowpagelibbak> searchNumberList(String phoneCondition, Integer start) {
-		List<Yellowpagelibbak> findAll = yellowpagelibbakRepository.findAll();
-		Pageable pageable = PageRequest.of(start, myConfig.getPageSize());
-		Specification<Yellowpagelibbak> specification = (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("phoneNumber"), "%" + phoneCondition + "%");
-	    Page<Yellowpagelibbak> page = yellowpagelibbakRepository.findAll(specification, pageable);
-	    List<Yellowpagelibbak> content = page.getContent();
-	/*	List<WhiteObject> lists = content.stream()
-				.map(item->{
-					WhiteObject whiteObject = new WhiteObject();
-					whiteObject.setPhonenumber(item.getPhonenumber());
-					return whiteObject;})
-				.collect(Collectors.toList());*/
-		return content;
+	public Pagination<Yellowpagelibbak> searchNumberList(String phoneCondition, Integer start, Integer pageSize) {
+		List<Yellowpagelibbak>  content = null;
+		Pagination<Yellowpagelibbak> pagination = new Pagination<>();
+		if(start ==null){
+			content = yellowpagelibbakRepository.findAll();
+			pagination.setList(content);
+			pagination.setCount(content.size());
+		}
+		else{
+			Pageable pageable = PageRequest.of(start, pageSize);
+			Specification<Yellowpagelibbak> specification = (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("phoneNumber"), "%" + phoneCondition + "%");
+			Page<Yellowpagelibbak> page = yellowpagelibbakRepository.findAll(specification, pageable);
+			content = page.getContent();
+			pagination.setList(content);
+			pagination.setCount(content.size());
+		}
+		return pagination;
 	}
 
 	@Override
@@ -53,7 +59,6 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 		yellowpagelibbakId.setSourceId(sourceId);
 		yellowpagelibbakRepository.deleteById(yellowpagelibbakId);
 	}
-	@Transactional
 	@Override
 	public void delNumber(String phoneNumber) {
 		yellowpagelibbakRepository.deleteByPhoneNumber(phoneNumber);
@@ -107,6 +112,36 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 		}
 		yellowpagelibbakRepository.save(yellowpagelibbaked);
 	}
+
+	@Override
+	public void addNumbers(List<Yellowpagelibbak> yellowpagelibbaks) {
+		yellowpagelibbaks.forEach(yellowpagelibbak -> {
+			if(yellowpagelibbak.getCreateTime()==null){
+				yellowpagelibbak.setCreateTime(new Date());
+			}
+			yellowpagelibbakRepository.save(yellowpagelibbak);
+		});
+	}
+
+	@Override
+	@Transactional
+	public void updateNumber(List<Yellowpagelibbak> yellowpagelibbaks) {
+		yellowpagelibbaks.forEach(yellowpagelibbak -> {
+			updateNumber(yellowpagelibbak);
+		});
+	}
+
+	@Override
+	public void delNumber(List<Yellowpagelibbak> yellowpagelibbaks) {
+		yellowpagelibbaks.forEach(yellowpagelibbak -> {
+			if(yellowpagelibbak.getSourceId()!=null){
+				delNumber(yellowpagelibbak.getPhoneNumber(),yellowpagelibbak.getSourceId());
+			}else{
+				delNumber(yellowpagelibbak.getPhoneNumber());
+			}
+		});
+	}
+
 	public  HSSFWorkbook doSetHSSFWorkbook(List<Yellowpagelibbak>yellowpagelibbaks ){
 		HSSFWorkbook wb = new HSSFWorkbook();
 		// 第二步，在webbook中添加一个sheet,对应Excel文件中的sheet
@@ -144,7 +179,7 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 				row.createCell(2).setCellValue(yellowpagelibbak.getProfession());
 				row.createCell(3).setCellValue(yellowpagelibbak.getClassBType());
 				row.createCell(4).setCellValue(yellowpagelibbak.getSourceId());
-				row.createCell(5).setCellValue(CommonUtils.getFormatedTime(yellowpagelibbak.getCreateTime()));
+				row.createCell(5).setCellValue(CommonUtils.getFormatedTime(yellowpagelibbak.getCreateTime().getTime()));
 			}
 		}
 		return wb;

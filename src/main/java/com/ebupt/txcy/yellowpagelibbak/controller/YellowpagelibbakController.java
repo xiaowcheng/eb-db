@@ -7,7 +7,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.ebupt.txcy.serviceapi.Entity.Spamlib;
 import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
+import com.ebupt.txcy.serviceapi.vo.Pagination;
 import com.ebupt.txcy.serviceapi.vo.Response;
 
 import com.ebupt.txcy.yellowpagelibbak.service.YellowpagelibbakService;
@@ -50,82 +52,52 @@ public class YellowpagelibbakController {
 	public Response searchNumberList(@RequestBody Map<String,String> input) {
 		String phoneCondition = input.get("phoneCondition");
 		String startStr = input.get("start");
-		Integer start = 0;
+		String pageStr = input.get("page");
+		Integer start = null;
+		Integer page =null;
 		if(CommonUtils.isNotBlank(startStr)) {
 			start = Integer.parseInt(startStr);
 		}
 		if(CommonUtils.isBlank(phoneCondition)) {
 			phoneCondition = "";
 		}
-		List<Yellowpagelibbak> lists = 	yellowpagelibbakService.searchNumberList(phoneCondition,start);
+		if(CommonUtils.isBlank(pageStr)){
+			page = Integer.parseInt(pageStr);
+		}
+		Pagination<Yellowpagelibbak> pagination = 	yellowpagelibbakService.searchNumberList(phoneCondition,start,page);
 		
-		return Response.ok(lists);
+		return Response.ok(pagination.getList(),pagination.getCount());
 	}
 	@PostMapping("addNumber")
-	public Response addNumber(@RequestBody Map<String,Object> input) {
-
-		String phoneNumber = (String) input.get("phoneNumber");
-		Integer sourceId =(Integer) input.get("sourceId");
-		String classAType =(String) input.get("classAType");
-		String profession =(String) input.get("profession");
-		String classBType = (String)input.get("classBType");
-		String createTimeStr =(String)input.get("createTime");
-		if(CommonUtils.isBlank(phoneNumber)||sourceId==null||CommonUtils.isBlank(classAType)||CommonUtils.isBlank(profession)||CommonUtils.isBlank(classBType)) {
-			Response.error("缺少参数");
-		}
-		Date createTime = null;
-		if(createTimeStr!=null){
-			createTime = CommonUtils.StrToDatess(createTimeStr);
-		}
-		if(createTime == null){
-			createTime = new Date();
-		}
-		Yellowpagelibbak yellowpagelibbak = new Yellowpagelibbak();
-		try {
-			BeanUtils.populate(yellowpagelibbak,input);
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		yellowpagelibbakService.addNumber(yellowpagelibbak);
+	public Response addNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+		yellowpagelibbaks.forEach(yellowpagelibbak -> {
+			if(CommonUtils.isBlank(yellowpagelibbak.getPhoneNumber())) {
+				Response.error("缺少phoneNumber参数");
+			}
+		});
+		yellowpagelibbakService.addNumbers(yellowpagelibbaks);
 		return Response.ok();
-		
 	}
 	@PostMapping("updateNumber")
-	public Response updateNumber(@RequestBody Map<String,Object> input) {
-		String phoneNumber = (String) input.get("phoneNumber");
-		Integer sourceId =(Integer) input.get("sourceId");
-		String classAType =(String) input.get("classAType");
-		String profession =(String) input.get("profession");
-		String classBType = (String)input.get("classBType");
-		if(CommonUtils.isBlank(phoneNumber)) {
-			Response.error("缺少phoneNumber参数");
-		}
-		Yellowpagelibbak yellowpagelibbak = new Yellowpagelibbak();
-		try {
-			BeanUtils.populate(yellowpagelibbak,input);
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		yellowpagelibbakService.updateNumber(yellowpagelibbak);
+	public Response updateNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+		yellowpagelibbaks.forEach(yellowpagelibbak -> {
+			if(CommonUtils.isBlank(yellowpagelibbak.getPhoneNumber())) {
+				Response.error("缺少phoneNumber参数");
+			}
+		});
+
+		yellowpagelibbakService.updateNumber(yellowpagelibbaks);
 		return Response.ok();
 	}
 	
 	@PostMapping("delNumber")
-	public Response delNumber(@RequestBody Map<String,Object> input) {
-		String phoneNumber =(String) input.get("phoneNumber");
-		Integer sourceId =(Integer) input.get("sourceId");
-		if(CommonUtils.isBlank(phoneNumber)) {
-			Response.error("缺少phoneNumber参数");
+	public Response delNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+		for (Yellowpagelibbak yellowpagelibbak : yellowpagelibbaks) {
+			if(yellowpagelibbak.getPhoneNumber()==null){
+				return Response.error("缺少phoneNumber参数");
+			}
 		}
-		if(sourceId==null){
-			yellowpagelibbakService.delNumber(phoneNumber);
-			return Response.ok();
-		}
-		yellowpagelibbakService.delNumber(phoneNumber,sourceId);
+		yellowpagelibbakService.delNumber(yellowpagelibbaks);
 		return Response.ok();
 	}
 	@PostMapping("exportNumbers")
