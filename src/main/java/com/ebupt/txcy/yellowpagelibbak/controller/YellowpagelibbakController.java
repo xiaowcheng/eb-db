@@ -2,19 +2,16 @@ package com.ebupt.txcy.yellowpagelibbak.controller;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.ebupt.txcy.serviceapi.Entity.Spamlib;
-import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
+import com.ebupt.txcy.serviceapi.dto.YellowpagelibbakRequestBody;
+import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
 import com.ebupt.txcy.serviceapi.vo.Pagination;
 import com.ebupt.txcy.serviceapi.vo.Response;
 
 import com.ebupt.txcy.yellowpagelibbak.service.YellowpagelibbakService;
 import com.ebupt.txcy.yellowpagelibbak.utils.CommonUtils;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +66,8 @@ public class YellowpagelibbakController {
 		return Response.ok(pagination.getList(),pagination.getCount());
 	}
 	@PostMapping("addNumber")
-	public Response addNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+	public Response addNumber(@RequestBody YellowpagelibbakRequestBody yellowpagelibbakRequestBody) {
+		List<Yellowpagelibbak> yellowpagelibbaks = yellowpagelibbakRequestBody.getPhoneList();
 		yellowpagelibbaks.forEach(yellowpagelibbak -> {
 			if(CommonUtils.isBlank(yellowpagelibbak.getPhoneNumber())) {
 				Response.error("缺少phoneNumber参数");
@@ -79,7 +77,8 @@ public class YellowpagelibbakController {
 		return Response.ok();
 	}
 	@PostMapping("updateNumber")
-	public Response updateNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+	public Response updateNumber(@RequestBody YellowpagelibbakRequestBody yellowpagelibbakRequestBody) {
+		List<Yellowpagelibbak> yellowpagelibbaks = yellowpagelibbakRequestBody.getPhoneList();
 		yellowpagelibbaks.forEach(yellowpagelibbak -> {
 			if(CommonUtils.isBlank(yellowpagelibbak.getPhoneNumber())) {
 				Response.error("缺少phoneNumber参数");
@@ -91,7 +90,8 @@ public class YellowpagelibbakController {
 	}
 	
 	@PostMapping("delNumber")
-	public Response delNumber(@RequestBody List< Yellowpagelibbak > yellowpagelibbaks) {
+	public Response delNumber(@RequestBody YellowpagelibbakRequestBody yellowpagelibbakRequestBody) {
+		List<Yellowpagelibbak> yellowpagelibbaks = yellowpagelibbakRequestBody.getPhoneList();
 		for (Yellowpagelibbak yellowpagelibbak : yellowpagelibbaks) {
 			if(yellowpagelibbak.getPhoneNumber()==null){
 				return Response.error("缺少phoneNumber参数");
@@ -99,28 +99,6 @@ public class YellowpagelibbakController {
 		}
 		yellowpagelibbakService.delNumber(yellowpagelibbaks);
 		return Response.ok();
-	}
-	@PostMapping("exportNumbers")
-	public ResponseEntity<byte[]> exportNumbers(@RequestBody Map<String,String>input) throws IOException {
-		String phoneNumber = input.get("phoneNumber");
-		String timeArea = input.get("timeArea");
-		HSSFWorkbook wb = yellowpagelibbakService.exportNumbers(phoneNumber,timeArea);
-		byte[] body = null;
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		try {
-			wb.write(os);
-			body = os.toByteArray();
-		} catch (IOException e) {
-			// 标记出错原因
-		} finally {
-			os.close();
-		}
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Content-Disposition","attachment; filename=\"" + "yellowpagelibbak.xls"+"\"");
-		headers.add("Content-Type", "text/html;charset=UTF-8");
-		HttpStatus statusCode = HttpStatus.OK;
-		ResponseEntity<byte[]> entity = new ResponseEntity<byte[]>(body, headers, statusCode);
-		return entity;
 	}
 	
 }

@@ -2,8 +2,8 @@ package com.ebupt.txcy.yellowpagelibbak.service.impl;
 
 import java.util.Date;
 import java.util.List;
-import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
-import com.ebupt.txcy.serviceapi.Entity.YellowpagelibbakId;
+import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
+import com.ebupt.txcy.serviceapi.entity.YellowpagelibbakId;
 import com.ebupt.txcy.serviceapi.vo.Pagination;
 import com.ebupt.txcy.yellowpagelibbak.config.MyConfig;
 

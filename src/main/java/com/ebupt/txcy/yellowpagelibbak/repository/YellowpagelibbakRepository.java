@@ -2,9 +2,8 @@ package com.ebupt.txcy.yellowpagelibbak.repository;
 
 import java.util.List;
 
-import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
-import com.ebupt.txcy.serviceapi.Entity.YellowpagelibbakId;
-import com.ebupt.txcy.serviceapi.Entity.Whitelist;
+import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
+import com.ebupt.txcy.serviceapi.entity.YellowpagelibbakId;
 import org.springframework.data.jpa.repository. JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

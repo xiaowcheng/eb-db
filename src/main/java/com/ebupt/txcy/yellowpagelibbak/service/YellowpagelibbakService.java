@@ -3,7 +3,7 @@ package com.ebupt.txcy.yellowpagelibbak.service;
 import java.util.List;
 
 
-import com.ebupt.txcy.serviceapi.Entity.Yellowpagelibbak;
+import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
 
 import com.ebupt.txcy.serviceapi.vo.Pagination;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
