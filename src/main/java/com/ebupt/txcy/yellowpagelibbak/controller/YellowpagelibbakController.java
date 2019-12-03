@@ -1,26 +1,22 @@
 package com.ebupt.txcy.yellowpagelibbak.controller;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+
 import java.util.List;
 import java.util.Map;
 
-import com.ebupt.txcy.serviceapi.dto.PhoneListResponse;
-import com.ebupt.txcy.serviceapi.dto.YellowpagelibbakRequestBody;
-import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
-import com.ebupt.txcy.serviceapi.vo.Pagination;
-import com.ebupt.txcy.serviceapi.vo.Response;
 
+import com.ebupt.txcy.yellowpagelibbak.dto.PhoneListResponse;
+import com.ebupt.txcy.yellowpagelibbak.dto.YellowpagelibbakRequestBody;
+import com.ebupt.txcy.yellowpagelibbak.entity.Yellowpagelibbak;
 import com.ebupt.txcy.yellowpagelibbak.service.YellowpagelibbakService;
 import com.ebupt.txcy.yellowpagelibbak.utils.CommonUtils;
 import com.ebupt.txcy.yellowpagelibbak.utils.Constants;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-
-import org.aspectj.apache.bcel.classfile.Constant;
+import com.ebupt.txcy.yellowpagelibbak.vo.Pagination;
+import com.ebupt.txcy.yellowpagelibbak.vo.Response;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,10 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("yellowpagelibbak/v1/")
+@Api(value = "黄页备份库管理接口",tags = {"提供单个查询，分页查询，批量更新，批量添加，批量删除"})
 public class YellowpagelibbakController {
 	@Autowired
 	private YellowpagelibbakService yellowpagelibbakService;
 
+	@ApiOperation(value = "单个查询",notes = "根据号码进行单个查询")
+	@ApiImplicitParam(name = "input",value = "{\"phoneCondition\":\"\"}",dataType = "Map",paramType = "body")
 	@PostMapping("searchNumber")
 	public Response searchNumber(@RequestBody Map<String,String> input) {
 		String phoneCondition = input.get("phoneCondition");
@@ -48,6 +47,8 @@ public class YellowpagelibbakController {
 	 * @param input
 	 * @return
 	 */
+	@ApiOperation(value = "分页查询",notes = "可根据号码进行分页查询")
+	@ApiImplicitParam(name = "input",value = "{\"phoneCondition\":\"\",\"page\":\"\",\"start\":\"\"}",dataType = "Map",paramType = "body")
 	@PostMapping("searchNumberList")
 	public Response searchNumberList(@RequestBody Map<String,String> input) {
 		String phoneCondition = input.get("phoneCondition");

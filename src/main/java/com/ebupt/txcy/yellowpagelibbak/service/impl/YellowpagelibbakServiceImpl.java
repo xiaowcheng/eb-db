@@ -1,24 +1,24 @@
 package com.ebupt.txcy.yellowpagelibbak.service.impl;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.ebupt.txcy.serviceapi.dto.PhoneListResponse;
-import com.ebupt.txcy.serviceapi.entity.Yellowpagelibbak;
-import com.ebupt.txcy.serviceapi.entity.YellowpagelibbakId;
-import com.ebupt.txcy.serviceapi.utils.EntityParamValidUtil;
-import com.ebupt.txcy.serviceapi.vo.Pagination;
-import com.ebupt.txcy.yellowpagelibbak.config.MyConfig;
 
+import com.ebupt.txcy.yellowpagelibbak.dto.PhoneListResponse;
+import com.ebupt.txcy.yellowpagelibbak.entity.Yellowpagelibbak;
+import com.ebupt.txcy.yellowpagelibbak.entity.YellowpagelibbakId;
 import com.ebupt.txcy.yellowpagelibbak.exception.ServiceException;
 import com.ebupt.txcy.yellowpagelibbak.repository.YellowpagelibbakRepository;
 import com.ebupt.txcy.yellowpagelibbak.service.YellowpagelibbakService;
 
 import com.ebupt.txcy.yellowpagelibbak.utils.CommonUtils;
 import com.ebupt.txcy.yellowpagelibbak.utils.Constants;
+import com.ebupt.txcy.yellowpagelibbak.utils.EntityParamValidUtil;
+import com.ebupt.txcy.yellowpagelibbak.utils.SqlUtil;
+import com.ebupt.txcy.yellowpagelibbak.vo.Pagination;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -30,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,7 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 	@Autowired
 	private YellowpagelibbakRepository yellowpagelibbakRepository;
 	@Autowired
-	private MyConfig myConfig;
+	private JdbcTemplate jdbcTemplate;
 	@Override
 	public Pagination<Yellowpagelibbak> searchNumberList(String phoneCondition, Integer start, Integer pageSize) {
 		List<Yellowpagelibbak>  content = null;
@@ -55,7 +56,7 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 			Page<Yellowpagelibbak> page = yellowpagelibbakRepository.findAll(specification, pageable);
 			content = page.getContent();
 			pagination.setList(content);
-			pagination.setCount(content.size());
+			pagination.setCount(page.getTotalElements());
 		}
 		return pagination;
 	}
@@ -123,22 +124,38 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 	@Override
 	@Transactional
 	public List<PhoneListResponse>  addNumbers(List<Yellowpagelibbak> yellowpagelibbaks) {
-		List<PhoneListResponse> phoneListResponses = new ArrayList<>();
-		yellowpagelibbaks.forEach(yellowpagelibbak -> {
-			PhoneListResponse phoneListResponse = addNumber(yellowpagelibbak);
-			phoneListResponses.add(phoneListResponse);
-		});
+		List<Yellowpagelibbak> dealList = new ArrayList<>();
+		List<PhoneListResponse> phoneListResponses = yellowpagelibbaks.stream().map(yellowpagelibbak -> {
+			if(yellowpagelibbak.getCreateTime()==null){
+				yellowpagelibbak.setCreateTime(new Date());
+			}
+			String[] strings = EntityParamValidUtil.validEntityInsertArray(yellowpagelibbak);
+			if (strings.length > 0) {
+				return PhoneListResponse.fail(yellowpagelibbak.getPhoneNumber(), Constants.PHOONENUMBER_REPSPONSE_PARAM + Arrays.toString(strings));
+			}else {
+				dealList.add(yellowpagelibbak);
+			}
+			return PhoneListResponse.ok(yellowpagelibbak.getPhoneNumber());
+		}).collect(Collectors.toList());
+		SqlUtil.executeInsertBatch(jdbcTemplate,dealList);
 		return phoneListResponses;
 	}
 
 	@Override
 	@Transactional
 	public List<PhoneListResponse>  updateNumber(List<Yellowpagelibbak> yellowpagelibbaks) {
-		List<PhoneListResponse> phoneListResponses = new ArrayList<>();
-		yellowpagelibbaks.forEach(yellowpagelibbak -> {
-			PhoneListResponse phoneListResponse = updateNumber(yellowpagelibbak);
-			phoneListResponses.add(phoneListResponse);
-		});
+		List<Yellowpagelibbak> dealList = new ArrayList<>();
+		List<PhoneListResponse> phoneListResponses = yellowpagelibbaks.stream().map(yellowpagelibbak -> {
+			String[] strings = EntityParamValidUtil.validEntityUpdateArray(yellowpagelibbak);
+			if (strings.length > 0) {
+				return PhoneListResponse.fail(yellowpagelibbak.getPhoneNumber(), Constants.PHOONENUMBER_REPSPONSE_PARAM + Arrays.toString(strings));
+			}else{
+				dealList.add(yellowpagelibbak);
+			}
+			return PhoneListResponse.ok(yellowpagelibbak.getPhoneNumber());
+		}).collect(Collectors.toList());
+
+		SqlUtil.executeUpdateBatch(jdbcTemplate,dealList);
 		return phoneListResponses;
 	}
 
