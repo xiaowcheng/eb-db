@@ -2,6 +2,8 @@ eureka:
   client:
     serviceUrl:
      defaultZone: http://10.1.63.198:8762/eureka/,http://10.1.63.199:8762/eureka/,http://10.1.63.200:8762/eureka/
+  instance:
+    prefer-ip-address: true
 spring:
   application:
     name: microservice-yellowpagelibbak-server
