@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -172,13 +173,16 @@ public class SqlUtil {
                         if(o instanceof  Date){
                             ps.setTimestamp(i+1,new Timestamp((((Date) o).getTime())));
                             continue;
-
                         }
-                        //当为null时，时间不能直接setObject
+                        //当为null时，最好不要通过Object来处理，类型会出异常
                         if(o==null){
                             Class<?> type = declaredField.getType();
                             if(type == Date.class||type==java.sql.Date.class){
                                 ps.setTimestamp(i+1,null);
+                                continue;
+                            }
+                            if(type==Integer.class){
+                                ps.setNull(i+1, Types.INTEGER);
                                 continue;
                             }
                         }
