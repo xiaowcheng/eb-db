@@ -14,6 +14,5 @@ public interface YellowpagelibbakRepository extends JpaRepository<Yellowpagelibb
 	 List<Yellowpagelibbak> findByPhoneNumberAndCreateTime(String phoneNumber, String createTime);
 	 List<Yellowpagelibbak> findByCreateTime(String createTime);
 	 List<Yellowpagelibbak> findByPhoneNumber(String phoneNumber);
-	Yellowpagelibbak getByPhoneNumber(String phoneNumber);
 	void deleteByPhoneNumber(String phoneNumber);
 }

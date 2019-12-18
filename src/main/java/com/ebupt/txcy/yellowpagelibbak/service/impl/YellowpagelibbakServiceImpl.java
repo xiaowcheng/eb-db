@@ -75,8 +75,8 @@ public class YellowpagelibbakServiceImpl implements YellowpagelibbakService {
 	}
 
 	@Override
-	public Yellowpagelibbak searchNumber(String phoneCondition) {
-		return yellowpagelibbakRepository.getByPhoneNumber(phoneCondition);
+	public List<Yellowpagelibbak> searchNumber(String phoneCondition) {
+		return yellowpagelibbakRepository.findByPhoneNumber(phoneCondition);
 	}
 
 

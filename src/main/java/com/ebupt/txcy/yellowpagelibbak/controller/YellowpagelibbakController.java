@@ -40,9 +40,9 @@ public class YellowpagelibbakController {
 		if(CommonUtils.isBlank(phoneCondition)) {
 			return Response.error(Constants.PHOONENUMBER_REPSPONSE_PARAM);
 		}
-		Yellowpagelibbak yellowpagelibbak  = 	yellowpagelibbakService.searchNumber(phoneCondition);
-		log.info("单个数据查询完成：{}",yellowpagelibbak);
-		return Response.ok(yellowpagelibbak);
+		List<Yellowpagelibbak> yellowpagelibbaks  = 	yellowpagelibbakService.searchNumber(phoneCondition);
+		log.info("单个数据查询完成：{}",yellowpagelibbaks);
+		return Response.ok(yellowpagelibbaks);
 	}
 	/**
 	 * start:0

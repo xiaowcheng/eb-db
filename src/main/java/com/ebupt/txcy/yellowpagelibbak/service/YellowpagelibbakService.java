@@ -18,7 +18,7 @@ public interface YellowpagelibbakService {
 	void delNumber(String phoneNumber);
 
 
-	Yellowpagelibbak searchNumber(String phoneCondition);
+	List<Yellowpagelibbak> searchNumber(String phoneCondition);
 
 
 	PhoneListResponse updateNumber(Yellowpagelibbak yellowpagelibbak);
