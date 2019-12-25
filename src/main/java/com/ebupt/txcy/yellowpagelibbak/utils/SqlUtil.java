@@ -1,10 +1,12 @@
 package com.ebupt.txcy.yellowpagelibbak.utils;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.lang.reflect.Field;
@@ -24,12 +26,8 @@ import java.util.List;
  */
 @Slf4j
 public class SqlUtil {
-    /**
-     * 根据实体生成更新的sql 语句以及对应的参数
-     * @param o
-     * @return
-     */
-    public static SqlAndParam getUpdateSqlString(Object o) {
+    
+   /* public static SqlAndParam getOracleUpdateSqlString(Object o) {
         List<String> params = new ArrayList<>();
         List<String> selectParam = new ArrayList<>();
         List<String> conditionParam = new ArrayList<>();
@@ -81,14 +79,10 @@ public class SqlUtil {
         params.addAll(conditionParam);
        return new SqlAndParam(finalSql,params);
 
-    }
-    public static String getInsertSql(Object obj){
-        return  getInsertSqlString(obj).getSql();
-    }
-    public static String getUpdateSql(Object obj){
-        return  getUpdateSqlString(obj).getSql();
-    }
-    public static SqlAndParam getInsertSqlString(Object obj){
+    }*/
+
+
+    public static SqlAndParam getOracleInsertSqlString(Object obj){
         List<String> param = new ArrayList<>();
         List<String> masterKeyParam = new ArrayList<>();
         List<String> updateParam = new ArrayList<>();
@@ -148,7 +142,99 @@ public class SqlUtil {
         return new SqlAndParam(sql,param);
     }
 
+    public static SqlAndParam getMysqlInsertSql(Object obj){
+        Class<?> aClass = obj.getClass();
+        Table table = aClass.getAnnotation(Table.class);
+        if(table==null){
+            return null;
+        }
+        String tableName = table.name();
+        Field[] fields = aClass.getDeclaredFields();
+        List<String> paramNames = new ArrayList<>();
+        StringBuilder insert = new StringBuilder("insert into ");
+        StringBuilder insert2 = new StringBuilder("(");
+        StringBuilder insert3 = new StringBuilder(" values(");
+        StringBuilder insert4 = new StringBuilder(" on duplicate key update ");
+        insert.append(tableName+" ");
+        try {
+            for (Field field : fields) {
+                field.setAccessible(true);
+                Column column = field.getAnnotation(Column.class);
+                //此处要注意实体的注解写法，对于复合主键
+                Id id = field.getAnnotation(Id.class);
+                if (column != null) {
+                    String name = column.name();
+                    insert2.append(name);
+                    insert2.append(",");
+                    insert3.append("?");
+                    insert3.append(",");
+                    paramNames.add(field.getName());
+                    insert4.append(" "+name+"=?");
+                    insert4.append(",");
+                }
 
+            }
+        }catch (Exception e){
+                log.error("sql拼装异常");
+        }
+        String substring = insert2.substring(0, insert2.lastIndexOf(","));
+        String substring2 = insert3.substring(0, insert3.lastIndexOf(","));
+        String substring1 = insert4.substring(0, insert4.lastIndexOf(","));
+        substring = substring+")";
+        insert.append(substring);
+        insert.append(" ");
+        insert.append(substring2);
+        insert.append(") ");
+        insert.append(substring1);
+        //insert into test (id,name,age,grade)  vaules(?,?,?,?)  on duplicate key update  id=?, name=?, age=?, grade=?
+        paramNames.addAll(paramNames);
+        SqlAndParam sqlAndParam = new SqlAndParam(insert.toString(),paramNames);
+        return  sqlAndParam;
+    }
+
+    public static SqlAndParam getUpdateSql(Object obj){
+        Class<?> aClass = obj.getClass();
+        Table table = aClass.getAnnotation(Table.class);
+        if(table==null){
+            return null;
+        }
+        String tableName = table.name();
+        Field[] fields = aClass.getDeclaredFields();
+        List<String> paramNames = new ArrayList<>();
+        List<String> conditionNames = new ArrayList<>();
+        StringBuilder stringBuilder = new StringBuilder("update ");
+        StringBuilder conditionBuilder = new StringBuilder(" where 1=1 ");
+        stringBuilder.append(tableName);
+        stringBuilder.append(" set ");
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Column column = field.getAnnotation(Column.class);
+            //此处要注意实体的注解写法，对于复合主键
+            Id id = field.getAnnotation(Id.class);
+            try {
+
+                if(column !=null&&id==null&&field.get(obj)!=null){
+                    String name = column.name();
+                    stringBuilder.append(name+"=?,");
+                    paramNames.add(field.getName());
+                }
+
+                if(id !=null && field.get(obj)!=null){
+                    String name = column.name();
+                    conditionBuilder.append(" and ");
+                    conditionBuilder.append( name+"=?");
+                    conditionNames.add(field.getName());
+
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        paramNames.addAll(conditionNames);
+        String substring = stringBuilder.substring(0, stringBuilder.lastIndexOf(","));
+        substring = substring+conditionBuilder.toString();
+        return new SqlAndParam(substring,paramNames);
+    }
     /**
      *
      * @param jdbcTemplate
@@ -237,23 +323,34 @@ public class SqlUtil {
         log.info("{}条，batchUpdate耗时："+(System.currentTimeMillis()-start),list.size());
     }
     public static <T> void  executeInsertBatch(JdbcTemplate jdbcTemplate,List<T> list){
+        String databaseProductName = null;
+        try {
+             databaseProductName = jdbcTemplate.getDataSource().getConnection().getMetaData().getDatabaseProductName();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         if(list.isEmpty()){
             return;
         }
         SqlAndParam sqlAndParam = null;
         for (T t : list) {
-            sqlAndParam = getInsertSqlString(t);
+            if("Oracle".equals(databaseProductName))
+                sqlAndParam = getOracleInsertSqlString(t);
+            else
+                sqlAndParam = getMysqlInsertSql(t);
             break;
         }
         executeBatch(jdbcTemplate,list,sqlAndParam);
     }
     public static <T> void executeUpdateBatch(JdbcTemplate jdbcTemplate,List<T> list){
+
         if(list.isEmpty()){
             return;
         }
         SqlAndParam sqlAndParam = null;
         for (T t : list) {
-            sqlAndParam = getUpdateSqlString(t);
+            sqlAndParam = getUpdateSql(t);
             break;
         }
         executeBatch(jdbcTemplate,list,sqlAndParam);
@@ -294,4 +391,27 @@ public class SqlUtil {
         }
     }
 
+    public static void main(String[] args) {
+        Test test = new Test();
+        test.setId(1);
+        test.setName("wftest");
+        test.setAge(20);
+        test.setGrade(1);
+        SqlAndParam mysqlInsertSql = getMysqlInsertSql(test);
+        System.out.println(mysqlInsertSql.getSql());
+    }
+    @Table(name = "test")
+    @Entity
+    @Data
+    static  class Test{
+        @Id
+        @Column(name = "id")
+        private Integer id;
+        @Column(name = "name")
+        private String name;
+        @Column(name = "age")
+        private Integer age;
+        @Column(name = "grade")
+        private Integer grade;
+    }
 }
