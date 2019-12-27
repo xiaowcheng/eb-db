@@ -12,9 +12,9 @@
     <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
 
     <property name="CONSOLE_LOG_FORMAT"
-              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger){cyan} %clr(:){faint} %m%n%wex" />
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger){cyan} %clr(:){faint} %m%n%wex" />
     <property name="FILE_LOG_FORMAT"
-    value="${FILE_LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %logger{39} : %m%n}"/>
+              value="${FILE_LOG_FORMAT:-%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %logger{39}:%line : %m%n}"/>
     <!-- 日志存放路径 -->
     <property name="LOG_PATH" value="${LOG_PATH:-/var/log/${APP_NAME}}"/>
     <!-- 保留日志的天数 -->
@@ -74,9 +74,36 @@
         </encoder>
     </appender>
 
+    <springProperty name="redisHost" scope="context" source="logback.redis.host" defaultValue="localhost"/>
+    <springProperty name="redisPort" scope="context" source="logback.redis.port" defaultValue="6379"/>
+    <springProperty name="redisPassword" scope="context" source="logback.redis.password"/>
+    <springProperty name="redisDatabase" scope="context" source="logback.redis.database" defaultValue="0"/>
+    <springProperty name="redisKey" scope="context" source="logback.redis.key"/>
+    <springProperty name="queueSize" scope="context" source="logback.queue-size" defaultValue="256"/>
+
+    <appender name="LOGSTASH" class="com.cwbase.logback.RedisAppender">
+        <host>${redisHost}</host>
+        <port>${redisPort}</port>
+        <password>${redisPassword}</password>
+        <key>${redisKey}</key>
+        <database>${redisDatabase}</database>
+        <layout class="com.cwbase.logback.JSONEventLayout">
+            <source>${APP_NAME}</source>
+            <properties>true</properties>
+        </layout>
+    </appender>
+
+    <appender name="ASYNC_LOG" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOGSTASH"/>
+        <queueSize>${queueSize}</queueSize>
+        <!-- 当队列剩余容量小于此值时，后续的日志将会被丢弃，默认值为：queueSize / 5 -->
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+
     <root level="INFO">
-        <appender-ref ref="CONSOLE_LOG" />
-        <appender-ref ref="INFO_FILE_LOG" />
-        <appender-ref ref="ERROR_FILE_LOG" />
+        <appender-ref ref="CONSOLE_LOG"/>
+        <appender-ref ref="INFO_FILE_LOG"/>
+        <appender-ref ref="ERROR_FILE_LOG"/>
+        <appender-ref ref="ASYNC_LOG"/>
     </root>
 </configuration>
