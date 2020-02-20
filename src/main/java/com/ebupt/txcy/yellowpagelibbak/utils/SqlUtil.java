@@ -10,10 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.lang.reflect.Field;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -324,21 +321,37 @@ public class SqlUtil {
     }
     public static <T> void  executeInsertBatch(JdbcTemplate jdbcTemplate,List<T> list){
         String databaseProductName = null;
+        Connection connection = null;
         try {
-             databaseProductName = jdbcTemplate.getDataSource().getConnection().getMetaData().getDatabaseProductName();
+             connection = jdbcTemplate.getDataSource().getConnection();
+            databaseProductName = connection.getMetaData().getDatabaseProductName();
         } catch (SQLException e) {
             e.printStackTrace();
+        }finally {
+            try {
+                if(connection!=null&&!connection.isClosed()){
+                      connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
         if(list.isEmpty()){
             return;
         }
         SqlAndParam sqlAndParam = null;
+        log.info("使用的数据库是：{}",databaseProductName);
         for (T t : list) {
-            if("Oracle".equals(databaseProductName))
+            if("Oracle".equals(databaseProductName)){
+                log.info("拼装oracleSQL");
                 sqlAndParam = getOracleInsertSqlString(t);
-            else
+            }
+            else{
+                log.info("拼装MysqlSQL");
                 sqlAndParam = getMysqlInsertSql(t);
+            }
+
             break;
         }
         executeBatch(jdbcTemplate,list,sqlAndParam);
