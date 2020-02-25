@@ -24,59 +24,6 @@ import java.util.List;
 @Slf4j
 public class SqlUtil {
     
-   /* public static SqlAndParam getOracleUpdateSqlString(Object o) {
-        List<String> params = new ArrayList<>();
-        List<String> selectParam = new ArrayList<>();
-        List<String> conditionParam = new ArrayList<>();
-        Class<?> aClass = o.getClass();
-        Table table = aClass.getAnnotation(Table.class);
-        String tableNmae = "";
-        StringBuilder sqlset = new StringBuilder(" update ");
-        StringBuilder sqlSelect = new StringBuilder(" select ");
-        StringBuilder sqlcondition = new StringBuilder(" where 1=1 ");
-
-        if(table!=null){
-            tableNmae = table.name();
-            sqlset.append(" "+tableNmae+" ");
-            sqlset.append(" set (");
-        }
-        Field[] fields = aClass.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
-            field.setAccessible(true);
-            Column column = field.getAnnotation(Column.class);
-            //此处要注意实体的注解写法，对于复合主键
-            Id id = field.getAnnotation(Id.class);
-            try {
-
-                if(column !=null&&id==null){
-                    String columnName = column.name();
-                    sqlset.append(" "+columnName+",");
-
-                    sqlSelect.append(" COALESCE(?,"+columnName+") as "+columnName+",");
-                    selectParam.add(field.getName());
-                }
-
-                if(id !=null && field.get(o)!=null){
-                    String columnName = column.name();
-                    sqlcondition.append(" and ");
-                    sqlcondition.append(" "+columnName+"= ?");
-                    conditionParam.add(field.getName());
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-
-        String sql1 = sqlset.substring(0,sqlset.lastIndexOf(","))+")";
-        String sql2 =sqlSelect.substring(0,sqlSelect.lastIndexOf(","))+" from "+tableNmae +sqlcondition;
-        String finalSql = sql1+"=("+sql2+")"+ sqlcondition;
-        params.addAll(selectParam);
-        params.addAll(conditionParam);
-        params.addAll(conditionParam);
-       return new SqlAndParam(finalSql,params);
-
-    }*/
 
 
     public static SqlAndParam getOracleInsertSqlString(Object obj){
@@ -123,7 +70,7 @@ public class SqlUtil {
                     insertPram.add(field.getName());
                 }
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                log.error("反射操作权限异常",e);
             }
         }
         String sql2 = "("+selectSql.substring(0,selectSql.lastIndexOf(","))+" from dual)tmp";
@@ -172,7 +119,7 @@ public class SqlUtil {
 
             }
         }catch (Exception e){
-                log.error("sql拼装异常");
+                log.error("[svc]sql拼装异常",e);
         }
         String substring = insert2.substring(0, insert2.lastIndexOf(","));
         String substring2 = insert3.substring(0, insert3.lastIndexOf(","));
@@ -240,6 +187,7 @@ public class SqlUtil {
      * @param <T>
      */
     private static<T> void executeBatch(JdbcTemplate jdbcTemplate,List<T> list,SqlAndParam sqlAndParam){
+        log.debug("执行sql",sqlAndParam.getSql());
         List<String> paramNames = sqlAndParam.getParamNames();
         long start = System.currentTimeMillis();
         jdbcTemplate.batchUpdate(sqlAndParam.getSql(), new BatchPreparedStatementSetter() {
@@ -272,10 +220,12 @@ public class SqlUtil {
                         ps.setObject(i+1,o);
 
                     } catch (NoSuchFieldException e) {
-                        throw new RuntimeException("服务器内部错误");
+                       ;
+                        log.error("[svc]反射获取失败",e);
 
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException("服务器内部错误");
+
+                       log.error("[svc]反射权限异常",e);
                     }
                 }
 
@@ -317,7 +267,7 @@ public class SqlUtil {
                 }
             }
         });*/
-        log.info("{}条，batchUpdate耗时："+(System.currentTimeMillis()-start),list.size());
+        log.debug("[svc]操作{}条数据，batchUpdate耗时："+(System.currentTimeMillis()-start),list.size());
     }
     public static <T> void  executeInsertBatch(JdbcTemplate jdbcTemplate,List<T> list){
         String databaseProductName = null;
@@ -326,14 +276,14 @@ public class SqlUtil {
              connection = jdbcTemplate.getDataSource().getConnection();
             databaseProductName = connection.getMetaData().getDatabaseProductName();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("[svc]获取连接异常",e);
         }finally {
             try {
                 if(connection!=null&&!connection.isClosed()){
                       connection.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error("[svc]释放连接异常",e);
             }
         }
 
@@ -341,14 +291,14 @@ public class SqlUtil {
             return;
         }
         SqlAndParam sqlAndParam = null;
-        log.info("使用的数据库是：{}",databaseProductName);
+        log.debug("使用的数据库是：{}",databaseProductName);
         for (T t : list) {
             if("Oracle".equals(databaseProductName)){
-                log.info("拼装oracleSQL");
+                log.debug("拼装oracleSQL");
                 sqlAndParam = getOracleInsertSqlString(t);
             }
             else{
-                log.info("拼装MysqlSQL");
+                log.debug("拼装MysqlSQL");
                 sqlAndParam = getMysqlInsertSql(t);
             }
 

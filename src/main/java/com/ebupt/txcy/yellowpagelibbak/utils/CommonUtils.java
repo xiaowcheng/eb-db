@@ -1,16 +1,21 @@
 package com.ebupt.txcy.yellowpagelibbak.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@Slf4j
 public class CommonUtils {
 	public static final String weekdayFormat = "EEE";
 	public static final String timeFormat = "HHmmss";
 	public static final String dateFormat = "yyyyMMdd";
 	public static final String monthFormat = "yyyyMM";
 	public static final String dateTimeFormat = dateFormat + timeFormat;
-
+	public static ObjectMapper objectMapper = new ObjectMapper();
 	/**
 	 * 通过匹配字符串以及序列号的长度获取下一序列号的统一规则相关ID
 	 * 
@@ -124,7 +129,7 @@ public class CommonUtils {
 	/**
 	 * 将yyyyMMdd转为yyyy-MM-dd
 	 * 
-	 * @param yyyyMMdd
+	 * @param yyyyMMddHHmmss
 	 * @return
 	 */
 	public static String changeDateStyleForyyyyMMdd(String yyyyMMddHHmmss) {
@@ -222,6 +227,15 @@ public class CommonUtils {
 	}
 
 	/**
+	 *
+	 * @param date
+	 * @return "yyyy-MM-dd hh:mm:ss"
+	 */
+	public static String getFormatedTime(Date date){
+		long mills = date.getTime();
+		 return getCurrentTimeString("yyyy-MM-dd hh:mm:ss",mills);
+	}
+	/**
 	 * 时间格式转换
 	 * 
 	 * @param time
@@ -292,8 +306,10 @@ public class CommonUtils {
 		   return date; 
 		}
 	public static Date StrToDatess(String str) {
-
-		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddhhmmss");
+		if(str==null){
+			return null;
+		}
+		SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 		Date date = null;
 		try {
 			date = format.parse(str);
@@ -319,5 +335,15 @@ public class CommonUtils {
 	 */
 	public static boolean isNotBlank(String str) {
 		return !isBlank(str);
+	}
+
+	public static String objectToJson(Object o){
+		String json = "";
+		try {
+			 json = objectMapper.writeValueAsString(o);
+		} catch (JsonProcessingException e) {
+			log.warn("日志参数{}转换json异常",o);
+		}
+		return json;
 	}
 }
